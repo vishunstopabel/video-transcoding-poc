@@ -1,13 +1,12 @@
 import React from "react";
 import { Button } from "../ui/button";
 import axiosInstance from "@/utils/AxiosInstance";
+import { Github } from "lucide-react";
 
 function ContinueWithGithubButton() {
-  console.log("hello");
   async function handleInitGithub() {
     try {
       const res = await axiosInstance.get("/auth/github");
-
       window.location.href = res.data.url;
     } catch (error) {
       console.log("Error in GitHub init:", error);
@@ -16,7 +15,14 @@ function ContinueWithGithubButton() {
 
   return (
     <div>
-      <Button onClick={handleInitGithub}>Continue with GitHub</Button>
+      <Button
+        onClick={handleInitGithub}
+        className="flex items-center gap-2 hover:bg-black hover:text-white"
+        variant="outline"
+      >
+        <Github className="w-5 h-5" />
+        Continue with GitHub
+      </Button>
     </div>
   );
 }
