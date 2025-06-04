@@ -17,7 +17,7 @@ function ContinueWithGithubButton() {
     <div>
       <Button
         onClick={handleInitGithub}
-        className="flex items-center gap-2 hover:bg-black hover:text-white"
+        className="flex items-center gap-2 bg-black text-white"
         variant="outline"
       >
         <Github className="w-5 h-5" />
