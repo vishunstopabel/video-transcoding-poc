@@ -26,10 +26,12 @@ io.on("connection", (socket) => {
   console.log("new Socket is connected", socket.id);
 });
 const authRouter = require("../src/routes/auth.routes");
+const uploadRouter = require("../src/routes/upload.routes");
 const connectToDB = require("./config/monoDbConnect");
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/upload", uploadRouter);
 const port = process.env.BACKEND_PORT || 8000;
 httpServer.listen(port, () => {
   console.log(`app is listening at the port:  ${port}`);
-  connectToDB()
+  connectToDB();
 });

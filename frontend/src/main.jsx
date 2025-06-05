@@ -13,11 +13,16 @@ import { Toaster } from "@/components/ui/sonner";
 import { Provider } from "react-redux";
 import { store } from "./store/store";
 import GithubCallback from "./components/mycomponents/GithubCallback";
+import UploadPage from "./components/mycomponents/UploadPage";
+import VideoUploadPage from "./components/mycomponents/VideoUploadPage";
 const route = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route>
-        <Route element={<App />} path="/" />
+        <Route element={<App />} path="/">
+          <Route element={<UploadPage />} path="/upload" />
+          <Route element={<VideoUploadPage/>} path="/upload/video"/>
+        </Route>
         <Route element={<GithubCallback />} path="/githubauth/callback" />
       </Route>
     </>
