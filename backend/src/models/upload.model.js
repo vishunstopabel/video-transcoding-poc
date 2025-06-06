@@ -13,13 +13,11 @@ const uploadSchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    originalVideo: {
+    originalVideoKey: {
       type: String,
-      required: true,
     },
-    originalThumbnailUrl: {
+    originalThumbnailKey: {
       type: String,
-      required: true,
     },
     format: { type: String },
     status: {
@@ -39,13 +37,11 @@ const uploadSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    transcodedVideoUrl: {
+    transcodedVideoKey: {
       type: String,
-      required: true,
     },
-    thumbnailUrl: {
+    thumbnailKey: {
       type: String,
-      required: true,
     },
     duration: {
       type: String,
