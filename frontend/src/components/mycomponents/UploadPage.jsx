@@ -1,85 +1,152 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Card, CardTitle, CardHeader, CardContent } from "../ui/card";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 
-const videos = [
-  {
-    id: 1,
-    title: "Build a Full Stack App",
-    thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-    uploader: "CodeWithMo",
-    videoUploaded: true,
-    status: "Processing",
-    estimatedTimeToTranscode: "4:00",
-  },
-  {
-    id: 2,
-    title: "React + Tailwind Crash Course",
-    thumbnail: "https://img.youtube.com/vi/tgbNymZ7vqY/hqdefault.jpg",
-    uploader: "Mo Dev",
-    videoUploaded: false,
-    status: "",
-    estimatedTimeToTranscode: "",
-  },
-];
+function UploadPage() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm();
 
-export default function UploadPage() {
-  const navigate = useNavigate();
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+
+  const thumbnailFile = watch("thumbnail");
+
+  // Set thumbnail preview
+  React.useEffect(() => {
+    if (thumbnailFile && thumbnailFile[0]) {
+      const file = thumbnailFile[0];
+      const previewURL = URL.createObjectURL(file);
+      setThumbnailPreview(previewURL);
+
+      // Cleanup on unmount
+      return () => URL.revokeObjectURL(previewURL);
+    }
+  }, [thumbnailFile]);
+
+  const onSubmit = (data) => {
+    console.log("Form Data:", data);
+  };
+
+  const handleVideoUpload = (e) => {
+    const file = e.target.files[0];
+    console.log("Video file:", file);
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground p-8">
-      <div className="border rounded-2xl p-6 w-full space-y-6">
-        {/* Header */}
-        <h1 className="text-xl font-semibold">Pending Videos</h1>
+    <div className="p-6">
+      <Card className="w-full pb-20">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-start ml-4">
+            Upload Page
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-row gap-4">
+          {/* LEFT SIDE */}
+          <div className="flex w-3/5 p-4">
+            <Card className="w-full min-h-[600px]">
+              <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                  {/* Title */}
+                  <div>
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      placeholder="Enter your video title"
+                      {...register("title", { required: true })}
+                    />
+                    {errors.title && (
+                      <p className="text-red-500 text-sm">Title is required</p>
+                    )}
+                  </div>
 
-        {/* Video Cards */}
-        <div className="flex flex-wrap gap-4">
-          {videos.map((video) => (
-            <Card key={video.id} className="w-[320px] rounded-xl">
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                className="w-full h-[180px] object-cover rounded-t-xl"
-              />
-              <CardContent className="p-4 space-y-1">
-                <p className="text-sm font-medium">{video.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  By {video.uploader}
-                </p>
-                {video.videoUploaded ? (
-                  <>
-                    <p className="text-xs">
-                      Status:{" "}
-                      <span className="font-medium">{video.status}</span>
-                    </p>
-                    <p className="text-xs">
-                      ETA:{" "}
-                      <span className="font-medium">
-                        {video.estimatedTimeToTranscode}
-                      </span>
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-xs text-destructive">Video not uploaded</p>
-                )}
+                  {/* Description */}
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Write a brief description..."
+                      className="min-h-[100px]"
+                      {...register("description", { required: true })}
+                    />
+                    {errors.description && (
+                      <p className="text-red-500 text-sm">
+                        Description is required
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Is Public */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="isPublic" {...register("isPublic")} />
+                    <Label htmlFor="isPublic">Make Public</Label>
+                  </div>
+
+                  {/* Thumbnail Upload */}
+                  <div className="space-y-2">
+                    <Label htmlFor="thumbnail">Upload Thumbnail</Label>
+                    <Input
+                      id="thumbnail"
+                      type="file"
+                      accept="image/*"
+                      {...register("thumbnail", { required: true })}
+                    />
+                    {thumbnailPreview && (
+                      <img
+                        src={thumbnailPreview}
+                        alt="Thumbnail Preview"
+                        className="mt-2 rounded-md max-h-40 w-auto object-contain border"
+                      />
+                    )}
+                    {errors.thumbnail && (
+                      <p className="text-red-500 text-sm">
+                        Thumbnail is required
+                      </p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full mt-4">
+                    Submit
+                  </Button>
+                </form>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
 
-        {/* Divider */}
-        <div className="border-t" />
+          {/* SEPARATOR */}
+          <div className="w-px bg-gray-200 mx-2" />
 
-        {/* Upload Button */}
-        <div className="flex justify-center">
-          <Button
-            className="px-6 py-2 rounded-full text-base"
-            onClick={() => navigate("/upload/video")}
-          >
-            Upload New Video
-          </Button>
-        </div>
-      </div>
+          {/* RIGHT SIDE */}
+          <div className="flex w-2/5 p-4 justify-center items-center">
+            <Card className="w-full h-full p-6 flex items-center justify-center">
+              <CardContent className="w-full space-y-4">
+                <Label htmlFor="video">Upload Video</Label>
+                <Input
+                  id="video"
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoUpload}
+                />
+                <Button
+                  className="w-full"
+                  onClick={() => console.log("Upload triggered")}
+                >
+                  Upload Video
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+export default UploadPage;
