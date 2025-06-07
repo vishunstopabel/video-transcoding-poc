@@ -44,7 +44,6 @@ module.exports.createVideo = async (req, res) => {
   try {
     const { _id } = req.user;
     const { title, description, isPublic, duration } = req.body;
-
     if (
       !title ||
       !description ||
@@ -63,7 +62,7 @@ module.exports.createVideo = async (req, res) => {
     const basePath = `videos/${_id}/${videoDetails._id}`;
     videoDetails.originalVideoKey = `${basePath}.mp4`;
     videoDetails.originalThumbnailKey = `${basePath}-original-thumbnail.jpg`;
-    videoDetails.transcodedVideoKey = `${basePath}-transcoded.mp4`;
+videoDetails.transcodedVideoKey = `${basePath}/master.m3u8`;
     videoDetails.thumbnailKey = `${basePath}-thumbnail.webp`; // Optimized one
     await videoDetails.save();
 
