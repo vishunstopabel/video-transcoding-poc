@@ -22,8 +22,8 @@ const uploadSchema = new mongoose.Schema(
     format: { type: String },
     status: {
       type: String,
-      enum: ["processing", "completed", "failed"],
-      default: "processing",
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
     },
     isPublic: {
       type: Boolean,

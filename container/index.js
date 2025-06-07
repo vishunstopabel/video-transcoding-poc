@@ -9,6 +9,11 @@ const newfs = require("node:fs");
 const ffmpeg = require("fluent-ffmpeg");
 const path = require("node:path");
 const { io } = require("socket.io-client");
+const socket = io(process.env.BACKENDURL);
+socket.on("connect", () => {
+  console.log(socket.id);
+});
+let progress = 0;
 const client = new S3Client({
   region: "ap-south-1",
   credentials: {
@@ -18,8 +23,16 @@ const client = new S3Client({
 });
 const BucketName = process.env.ORIGINALVIDEOBUCKETNAME;
 const key = process.env.KEY;
-const UploadId=(key.split('/'))[2]
-
+const creadentails = key.split("/");
+const UploadId = creadentails[2];
+const uploderID = creadentails[1];
+if (socket.connected) {
+  socket.emit("videotranscoding-init", {
+    videoId: UploadId,
+    uploaderId: uploderID,
+    progress: 0,
+  });
+}
 const resolutions = [
   { name: "240p", height: 240, bitrate: 300 },
   { name: "360p", height: 360, bitrate: 800 },
@@ -37,7 +50,11 @@ async function getOriginalResolution(filePath) {
       const videoStream = metadata.streams.find(
         (s) => s.codec_type === "video"
       );
-      resolve({ width: videoStream.width, height: videoStream.height });
+      resolve({
+        width: videoStream.width,
+        height: videoStream.height,
+        size: videoStream.duration,
+      });
     });
   });
 }
@@ -63,6 +80,9 @@ async function processVideoHLS(originalPath) {
   );
   const masterPlaylistLines = [];
 
+  let processedCount = 0;
+  const totalCount = filteredResolutions.length;
+
   const hlsPromises = filteredResolutions.map((res) => {
     return new Promise((resolve) => {
       const outputDir = path.resolve(`output-${res.name}`);
@@ -84,10 +104,10 @@ async function processVideoHLS(originalPath) {
             "4",
             "-hls_playlist_type",
             "vod",
-            `-hls_segment_filename`,
+            "-hls_segment_filename",
             `${outputDir}/segment-%03d.ts`,
           ])
-          .output(`${outputDir}/${playlistName}`)///chat gpt thingg
+          .output(`${outputDir}/${playlistName}`)
           .on("end", async () => {
             const files = await fs.readdir(outputDir);
             for (const file of files) {
@@ -101,9 +121,18 @@ async function processVideoHLS(originalPath) {
               `#EXT-X-STREAM-INF:BANDWIDTH=${res.bitrate * 1000},RESOLUTION=${
                 (res.height * 16) / 9
               }x${res.height}\n${res.name}/${playlistName}`
-            );///chat gpt thingg
-
+            );
+            processedCount += 1;
+            progress = Math.floor((processedCount / totalCount) * 100);
             console.log(` HLS for ${res.name} done`);
+            console.log(`Progress: ${progress}%`);
+
+            socket.emit("transcoding-progress", {
+              videoId: UploadId,
+              uploaderId: uploderID,
+              progress: progress,
+            });
+
             resolve();
           })
           .on("error", (err) => {
@@ -116,6 +145,8 @@ async function processVideoHLS(originalPath) {
   });
 
   await Promise.all(hlsPromises);
+
+  // Master playlist creation
   const masterPlaylist = `#EXTM3U\n${masterPlaylistLines.join("\n")}`;
   const masterPath = path.resolve("master.m3u8");
   await fs.writeFile(masterPath, masterPlaylist);
@@ -134,8 +165,26 @@ async function init() {
     const originalPath = path.resolve(originalFile);
     await processVideoHLS(originalPath);
     console.log(" Adaptive HLS streaming setup complete");
+
+    if (socket.connected) {
+      socket.emit("videotranscoding-done", {
+        videoId: UploadId,
+        uploaderId: uploderID,
+        progress: 100,
+      });
+    }
+    socket.disconnect();
   } catch (error) {
     console.error(" Error:", error);
+    
+    if (socket.connected) {
+      socket.emit("videotranscoding-fail", {
+        videoId: UploadId,
+        uploaderId: uploderID,
+        progress: 100,
+      });
+    }
+    socket.disconnect();
   }
 }
 
