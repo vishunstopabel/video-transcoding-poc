@@ -1,23 +1,8 @@
-const { getSignedUrl } = require("@aws-sdk/cloudfront-signer");
 const UploadModel = require("../models/upload.model");
-
-const getSignedUrlForThumbnail = (key) => {
-  console.log("Generating signed URL for thumbnail:", key);
-  console.log("CloudFront Domain:", process.env.AWS_BUCKET_CLOUD_FRONT_DOMAIN);
-  console.log("Private Key:", process.env.AWS_CLOUD_FRONT_PRIVATE_KEY);
-  console.log("Key Pair ID:", process.env.AWS_CLOUD_FRONT_KEYPAIR_ID);
-  return getSignedUrl({
-    url: `${process.env.AWS_BUCKET_CLOUD_FRONT_DOMAIN}/${key}`,
-    dateLessThan: new Date(Date.now() + 3600 * 1000),
-    privateKey: process.env.AWS_CLOUD_FRONT_PRIVATE_KEY.replace(/\\n/g, '\n'), 
-    keyPairId: process.env.AWS_CLOUD_FRONT_KEYPAIR_ID,
-  }); 
-  // return `${process.env.AWS_BUCKET_CLOUD_FRONT_DOMAIN}/${key}`; ///// if you dont want to use signed url
-};
-
+const { getSignedUrlForThumbnail } = require("../utils/aws");
 module.exports.handleGetAllVideosByUser = async (req, res) => {
   try {
-    const _id = "683eef4801c10ff00acefa85";
+    const {_id} = req.user;
     const videos = await UploadModel.find({ uploadedBy: _id }).sort({
       createdAt: -1,
     });
@@ -27,7 +12,7 @@ module.exports.handleGetAllVideosByUser = async (req, res) => {
     const signedVideos = await Promise.all(
       videos.map(async (video) => {
         const signedUrl = getSignedUrlForThumbnail(video.thumbnailKey);
-        console.log("Signed URL for video:", signedUrl);
+
         video.thumbnailKey = signedUrl;
         return video;
       })
@@ -42,5 +27,25 @@ module.exports.handleGetAllVideosByUser = async (req, res) => {
   } catch (error) {
     console.error("Error fetching videos:", error);
     return res.status(500).json({ message: "Failed to fetch videos" });
+  }
+};
+
+
+module.exports.handleGetVideoById = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    if (!videoId) {
+      return res.status(400).json({ message: "Video ID is required" });
+    }
+    const video = await UploadModel.findById(videoId);
+    if (!video) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+    const signedUrl = getSignedUrlForThumbnail(video.thumbnailKey);
+    video.thumbnailKey = signedUrl;
+    return res.status(200).json(video);
+  } catch (error) {
+    console.error("Error fetching video by ID:", error);
+    return res.status(500).json({ message: "Failed to fetch video" });
   }
 };

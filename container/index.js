@@ -131,6 +131,7 @@ async function processVideoHLS(originalPath) {
               videoId: UploadId,
               uploaderId: uploderID,
               progress: progress,
+              file:res.name,
             });
 
             resolve();
@@ -146,7 +147,7 @@ async function processVideoHLS(originalPath) {
 
   await Promise.all(hlsPromises);
 
-  // Master playlist creation
+
   const masterPlaylist = `#EXTM3U\n${masterPlaylistLines.join("\n")}`;
   const masterPath = path.resolve("master.m3u8");
   await fs.writeFile(masterPath, masterPlaylist);

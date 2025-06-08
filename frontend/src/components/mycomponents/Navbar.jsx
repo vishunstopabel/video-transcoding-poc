@@ -1,52 +1,89 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { LogOut, Upload, Video } from "lucide-react";
+import { LogOut, Upload, Video, Settings, User } from "lucide-react";
 import ContinueWithGithubButton from "./ContinueWithGithubButton";
 import useLogout from "@/hooks/UseLogout";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 function Navbar() {
   const logout = useLogout();
   const navigate = useNavigate();
+  const { isAuthenticated, authdata } = useSelector((state) => state.auth);
 
-  const { isAuthenticated } = useSelector((state) => state.auth);
-
-  const authenticatedItems = [
+  const navItems = [
     {
-      name: "Upload Videos",
-      icon: <Upload className="w-5 h-5" />,
+      name: "Upload",
+      icon: <Upload className="w-4 h-4" />,
       onClick: () => navigate("/upload"),
     },
     {
-      name: "Your Videos",
-      icon: <Video className="w-5 h-5" />,
+      name: "My Videos",
+      icon: <Video className="w-4 h-4" />,
       onClick: () => navigate("/my-videos"),
-    },
-    {
-      name: "Logout",
-      icon: <LogOut className="w-5 h-5" />,
-      onClick: logout,
     },
   ];
 
   return (
-    <nav className="w-full px-6 py-3 bg-white border-b shadow-sm flex justify-between items-center">
+    <nav className="w-full px-6 py-3 bg-white border-b shadow-sm flex items-center justify-between fixed top-0 z-50">
+      {/* Logo */}
       <div className="text-xl font-bold text-black">MyTube</div>
 
+      {/* Authenticated nav or login button */}
       {isAuthenticated ? (
-        <div className="flex items-center gap-4">
-          {authenticatedItems.map((item) => (
+        <div className="flex items-center gap-3">
+          {navItems.map((item) => (
             <Button
               key={item.name}
-              variant="outline"
-              className="flex items-center gap-2"
+              variant="ghost"
+              className="flex items-center gap-2 text-sm hover:bg-gray-100 transition"
               onClick={item.onClick}
             >
               {item.icon}
-              <span className="text-sm">{item.name}</span>
+              {item.name}
             </Button>
           ))}
+
+          {/* Avatar with Dropdown */}
+          {authdata?.avatar_url && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <img
+                  src={authdata.avatar_url}
+                  alt="Profile"
+                  className="w-9 h-9 rounded-full border border-gray-300 shadow-sm cursor-pointer hover:scale-105 transition"
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 mt-2">
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile")}
+                  className="flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/settings")}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="w-4 h-4" /> Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="flex items-center gap-2 text-red-600"
+                >
+                  <LogOut className="w-4 h-4" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       ) : (
         <ContinueWithGithubButton />

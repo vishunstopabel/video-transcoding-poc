@@ -52,7 +52,7 @@ module.exports.createVideo = async (req, res) => {
     videoDetails.originalVideoKey = `${basePath}.mp4`;
     videoDetails.originalThumbnailKey = `${basePath}-original-thumbnail.jpg`;
     videoDetails.transcodedVideoKey = `${basePath}/master.m3u8`;
-    videoDetails.thumbnailKey = `${basePath}-optimized-thumbnail.webp`; // Optimized one
+    videoDetails.thumbnailKey = `${basePath}-optimized-thumbnail.webp`;
     await videoDetails.save();
     console.log("Video details saved:", videoDetails.originalThumbnailKey);
     console.log(process.env.AWS_BUCKET_ORIGINAL_TUMBNAIL);

@@ -29,7 +29,7 @@ io.on("connection", (socket) => {
 
   socket.on(
     "transcoding-progress",
-    async ({ videoId, uploaderId, progress }) => {
+    async ({ videoId, uploaderId, progress,file}) => {
       const socketIds = await client.smembers(`socket:${uploaderId}`);
       if (!socketIds || socketIds.length === 0) {
         console.log("User is offline.");
@@ -40,6 +40,7 @@ io.on("connection", (socket) => {
           videoId,
           uploaderId,
           progress,
+          file
         });
       });
     }

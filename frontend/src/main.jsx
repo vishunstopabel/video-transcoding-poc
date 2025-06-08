@@ -14,13 +14,17 @@ import { Provider } from "react-redux";
 import { store } from "./store/store";
 import GithubCallback from "./components/mycomponents/GithubCallback";
 import UploadPage from "./components/mycomponents/UploadPage";
-
+import Yourvideos from "./components/mycomponents/Yourvideos";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import VideoInfo from "./components/mycomponents/VideoInfo";
 const route = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route>
         <Route element={<App />} path="/">
           <Route element={<UploadPage />} path="/upload" />
+          <Route element={<Yourvideos />} path="/my-videos" />
+          <Route element={<VideoInfo />} path="/my-videos/:videoId" />
         </Route>
         <Route element={<GithubCallback />} path="/githubauth/callback" />
       </Route>
@@ -30,8 +34,10 @@ const route = createBrowserRouter(
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
-      <RouterProvider router={route} />
-      <Toaster />
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <RouterProvider router={route} />
+        <Toaster />
+      </ThemeProvider>
     </Provider>
   </StrictMode>
 );

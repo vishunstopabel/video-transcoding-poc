@@ -132,7 +132,7 @@ function UploadPage() {
         });
         if(response){
           toast.success("Video uploaded successfully");
-          navigate(`/videos/${videoId}`);
+          navigate(`/my-videos/${videoId}`);
         }
         setIsVideoUploading(false);
         setVideoFile(null); 
