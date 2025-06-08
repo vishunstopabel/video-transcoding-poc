@@ -1,8 +1,8 @@
 const { Server } = require("socket.io");
 const { getClient } = require("../config/redisConnet");
-
+const jwt = require("jsonwebtoken");
 let io;
-
+const {registerTranscodingEvents} = require("./transcoder.socket");
 const SocketIo = async (httpServer) => {
   const client = getClient();
   io = new Server(httpServer, {
@@ -19,7 +19,7 @@ const SocketIo = async (httpServer) => {
         return next(new Error("Authentication error: Token missing"));
       }
       try {
-        const user = await heleper.verifyJwt(token);
+        const user = jwt.verify(token, process.env.JWT_SECRET);
         console.log(user);
         socket.user = user;
       } catch (error) {
@@ -31,26 +31,33 @@ const SocketIo = async (httpServer) => {
     }
     next();
   });
-
   io.on("connection", (socket) => {
-    console.log(`new user conneted ${socket.user._id}`);
-    client.sadd(
-      `socket:${socket.user._id}`,
-      socket.id
-    );
+    if (socket.user) {
+      console.log(`connected: ${socket.user._id}`);
+      client.sAdd(`socket:${socket.user._id}`, socket.id); // ✅ fixed
+    } else {
+      console.log("container connected", socket.id);
+    }
 
-    socket.on("disconnect", (reason) => {
-      console.log(
-        `$disconnected: ${socket.user._id} due to ${reason}`
-      );
-     client.srem(
-      `socket:${socket.user._id}`,
-      socket.id
-    );
+
+    socket.on("disconnect", async(reason) => {
+    if (socket.user) {
+        console.log(`disconnected: ${socket.user._id} - ${reason}`);
+       await client.sRem(`socket:${socket.user._id}`, socket.id);
+      }
+      else {
+        console.log(`container disconnected: ${socket.id} - ${reason}`);
+      }
     });
+    registerTranscodingEvents(io, socket); 
   });
   return io;
 };
+function getCookieValue(cookies, cookieName) {
+  const match = cookies.match(new RegExp("(^| )" + cookieName + "=([^;]+)"));
+  if (match) return match[2];
+  return null;
+}
 
 const getIo = () => {
   if (!io) {

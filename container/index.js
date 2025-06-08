@@ -182,7 +182,7 @@ async function init() {
       socket.emit("videotranscoding-fail", {
         videoId: UploadId,
         uploaderId: uploderID,
-        progress: 100,
+        progress: 0,
       });
     }
     socket.disconnect();

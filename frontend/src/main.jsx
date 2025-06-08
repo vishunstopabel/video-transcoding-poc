@@ -17,6 +17,7 @@ import UploadPage from "./components/mycomponents/UploadPage";
 import Yourvideos from "./components/mycomponents/Yourvideos";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import VideoInfo from "./components/mycomponents/VideoInfo";
+import { SocketProvider } from "./context/SocketContex";
 const route = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -34,10 +35,12 @@ const route = createBrowserRouter(
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
+      <SocketProvider>
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <RouterProvider router={route} />
         <Toaster />
       </ThemeProvider>
+       </SocketProvider>
     </Provider>
   </StrictMode>
 );

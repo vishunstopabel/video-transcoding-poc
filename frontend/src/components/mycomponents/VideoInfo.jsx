@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { Progress } from "../ui/progress";
+import { useSocket } from "@/context/SocketContex";
 
 function VideoInfo() {
   const { videoId } = useParams();
@@ -17,6 +18,7 @@ function VideoInfo() {
   const [status, setStatus] = useState("processing");
   const [progress, setProgress] = useState(0);
   const [filename, setFilename] = useState("");
+  const socket = useSocket();
   useEffect(() => {
     const fetchVideoInfo = async () => {
       try {
@@ -38,9 +40,30 @@ function VideoInfo() {
     fetchVideoInfo();
   }, [videoId, navigate]);
 
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+    alert("Socket initialized");
+    socket.on(
+      `transcoding-progress-${videoId}`,
+      ({ videoId, uploaderId, progress, file }) => {
+        alert("Transcoding progress received");
+        console.log({ videoId, uploaderId, progress, file });
+        console.log(`Transcoding progress for video ${videoId}: ${progress}%`);
+        setProgress(progress);
+        setFilename(file);
+        setStatus("processing");
+      }
+    );
 
-  
+    socket.on()
 
+    return ()=>{
+      socket.off(" `transcoding-progress-${videoId}`")
+    }
+
+  }, [socket, videoId]);
 
   if (loading) {
     return (
@@ -94,8 +117,6 @@ function VideoInfo() {
 
             <Button variant="outline">Change Thumbnail</Button>
           </div>
-
-         
         </div>
 
         {/* Right Column: Video Details */}
@@ -111,19 +132,16 @@ function VideoInfo() {
               <p className="text-xs text-muted-foreground">
                 Uploaded at: {new Date(video.createdAt).toLocaleString()}
               </p>
-                {
-                  status==="processing"?(
-                    <div className="text-yellow-500">
-                      <>
+              {status === "processing" ? (
+                <div className="text-yellow-500">
+                  <>
                     <Progress value={progress} className="mt-2" />
                     <span className="text-sm text-gray-500">
                       Video Transcoding Progress: {progress}% [{filename}]
                     </span>
                   </>
-                    </div>
-                  ):
-                 null
-                }
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 
