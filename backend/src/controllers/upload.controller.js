@@ -9,7 +9,7 @@ module.exports.handleGetSignUrl = async (req, res) => {
   try {
     const { _id } = req.user;
     const { uploadId } = req.query;
-    if ( !uploadId) {
+    if (!uploadId) {
       return res.status(400).json({
         message: "Missing required query parameters: uploadId",
       });
@@ -43,6 +43,7 @@ module.exports.createVideo = async (req, res) => {
     } ///typeof this is good if you are using the boolen values
 
     const videoDetails = await UploadModel.create({
+      uploadedBy: _id,
       title,
       description,
       isPublic,
@@ -51,7 +52,7 @@ module.exports.createVideo = async (req, res) => {
     videoDetails.originalVideoKey = `${basePath}.mp4`;
     videoDetails.originalThumbnailKey = `${basePath}-original-thumbnail.jpg`;
     videoDetails.transcodedVideoKey = `${basePath}/master.m3u8`;
-    videoDetails.thumbnailKey = `${basePath}-thumbnail.webp`; // Optimized one
+    videoDetails.thumbnailKey = `${basePath}-optimized-thumbnail.webp`; // Optimized one
     await videoDetails.save();
     console.log("Video details saved:", videoDetails.originalThumbnailKey);
     console.log(process.env.AWS_BUCKET_ORIGINAL_TUMBNAIL);
@@ -74,3 +75,26 @@ module.exports.createVideo = async (req, res) => {
     });
   }
 };
+
+
+module.exports.handleUpdateVideoUploadStatus = async (req, res) => {
+  try {
+    const { _id } = req.user;
+    const { videoId } = req.body;
+    if (!videoId) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+    const video = await UploadModel.findOneAndUpdate(
+      { _id: videoId, uploadedBy: _id },
+      { isVideoUploaded: true, isThumbnailUploaded: true },
+      { new: true }
+    );
+    if (!video) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+    return res.status(200).json({ message: "Video status updated", video });
+  } catch (error) {
+    console.error("Error updating video status:", error);
+    return res.status(500).json({ message: "Failed to update video status" });
+  }
+}

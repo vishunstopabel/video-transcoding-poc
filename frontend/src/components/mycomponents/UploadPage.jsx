@@ -127,8 +127,15 @@ function UploadPage() {
       if (response.status === 200) {
         console.log("Video uploaded successfully");
         setUploadProgress(100);
-        navigate(`/videos/${videoId}`);
-        toast.success("Video uploaded successfully");
+        const response = await axiosInstance.put("/upload/updateVideoStatus", {
+          videoId: videoId,
+        });
+        if(response){
+          toast.success("Video uploaded successfully");
+          navigate(`/videos/${videoId}`);
+        }
+        setIsVideoUploading(false);
+        setVideoFile(null); 
       } else {
         setIsVideoUploading(false);
         setUploadProgress(0);
@@ -203,7 +210,7 @@ function UploadPage() {
                       <Input
                         id="thumbnail"
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg"
                         {...register("thumbnail", { required: true })}
                       />
                       {thumbnailPreview && (

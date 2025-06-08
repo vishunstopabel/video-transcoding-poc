@@ -34,9 +34,10 @@ app.get("/", async (req, res) => res.send("server is on "));
 const authRouter = require("../src/routes/auth.routes");
 const uploadRouter = require("../src/routes/upload.routes");
 const connectToDB = require("./config/monoDbConnect");
-
+const viewRouter = require("./routes/view.routes");
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/upload", uploadRouter);
+app.use("/api/v1/view", viewRouter);
 const port = process.env.BACKEND_PORT || 8000;
 httpServer.listen(port, () => {
   console.log(`app is listening at the port:  ${port}`);
