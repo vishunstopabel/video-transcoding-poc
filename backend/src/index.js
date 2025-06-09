@@ -9,13 +9,16 @@ const { SocketIo } = require("./sockets/connect.socket");
 const { config } = require("dotenv");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const { transcoderConsumer } = require("../src/consumers/transocder.comsumer");
 config({});
- const initConnections=async ()=>{
-  await  ConnectToRedis();
-   await connectToDB();
-     await SocketIo(httpServer);
- } 
-initConnections()
+const initConnections = async () => {
+  await ConnectToRedis();
+  await connectToDB();
+  await SocketIo(httpServer);
+  await connectToRabbitMq()
+  await transcoderConsumer();
+};
+initConnections();
 
 app.use(
   cors({
@@ -35,11 +38,11 @@ const authRouter = require("../src/routes/auth.routes");
 const uploadRouter = require("../src/routes/upload.routes");
 const connectToDB = require("./config/monoDbConnect");
 const viewRouter = require("./routes/view.routes");
+const { connectToRabbitMq } = require("./config/rabitmqConnect");
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/upload", uploadRouter);
 app.use("/api/v1/view", viewRouter);
 const port = process.env.BACKEND_PORT || 8000;
 httpServer.listen(port, () => {
   console.log(`app is listening at the port:  ${port}`);
- 
 });

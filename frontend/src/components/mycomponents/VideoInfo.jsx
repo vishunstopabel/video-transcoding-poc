@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { Progress } from "../ui/progress";
 import { useSocket } from "@/context/SocketContex";
+import { toast } from "sonner";
 
 function VideoInfo() {
   const { videoId } = useParams();
@@ -15,7 +16,7 @@ function VideoInfo() {
   const [video, setVideo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [status, setStatus] = useState("processing");
+  const [status, setStatus] = useState("pending");
   const [progress, setProgress] = useState(0);
   const [filename, setFilename] = useState("");
   const socket = useSocket();
@@ -30,6 +31,7 @@ function VideoInfo() {
           return;
         }
         setVideo(response.data);
+        setStatus(response.data.status)
       } catch (err) {
         setError("Failed to load video details.");
         console.error("Error fetching video info:", err);
@@ -41,30 +43,58 @@ function VideoInfo() {
   }, [videoId, navigate]);
 
   useEffect(() => {
-    if (!socket) {
-      return;
-    }
-    alert("Socket initialized");
-    socket.on(
-      `transcoding-progress-${videoId}`,
-      ({ videoId, uploaderId, progress, file }) => {
-        alert("Transcoding progress received");
-        console.log({ videoId, uploaderId, progress, file });
-        console.log(`Transcoding progress for video ${videoId}: ${progress}%`);
-        setProgress(progress);
-        setFilename(file);
-        setStatus("processing");
-      }
-    );
+    if (!socket) return;
 
-    socket.on()
-
-    return ()=>{
-      socket.off(" `transcoding-progress-${videoId}`")
+    console.log("Socket initialized");
+    const init=({ videoId, uploaderId, progress})=>{
+         console.log({ videoId, uploaderId, progress });
+          setStatus("processing");
+           setProgress(0);
     }
 
+
+    const onProgress = ({ videoId, uploaderId, progress, file }) => {
+      console.log({ videoId, uploaderId, progress, file });
+      console.log(`Progress: ${progress}%`);
+      setStatus("processing");
+      setProgress(progress);
+      setFilename(file);
+    };
+
+    const onDone = ({ progress }) => {
+      setProgress(progress);
+      setFilename("");
+      setStatus("completed");
+      setVideo((prev) => ({
+        ...prev,
+        status: "completed",
+      }));
+      toast.success("Video is ready to view");
+    };
+    const handleFail = ({msg}) => {
+      console.log(msg )
+      toast.error(msg)
+      setProgress(0);
+      setFilename("");
+      setStatus("failed");
+      setVideo((prev) => ({
+        ...prev,
+        status: "failed",
+      }));
+      toast.error(`Transcoding failed: ${error}`);
+    };
+    socket.on(`transcoding-init-${videoId}`,init)
+    socket.on(`transcoding-progress-${videoId}`, onProgress);
+    socket.on(`transcoding-done-${videoId}`, onDone);
+    socket.on(`transcoding-fail-${videoId}`, handleFail);
+
+    return () => {
+      socket.off(`transcoding-progress-${videoId}`, onProgress);
+       socket.on(`transcoding-init-${videoId}`,init)
+      socket.off(`transcoding-done-${videoId}`, onDone);
+      socket.off(`transcoding-fail-${videoId}`, handleFail);
+    };
   }, [socket, videoId]);
-
   if (loading) {
     return (
       <div className="p-8 space-y-4">
@@ -144,7 +174,14 @@ function VideoInfo() {
               ) : null}
             </CardContent>
           </Card>
-
+          {status === "failed" && (
+            <Button
+              variant="destructive"
+              onClick={() => toast.info("Retry not implemented yet")}
+            >
+              Retry Transcoding
+            </Button>
+          )}
           <Button>Edit Details</Button>
         </div>
       </div>

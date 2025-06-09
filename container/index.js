@@ -24,15 +24,15 @@ const client = new S3Client({
 const BucketName = process.env.ORIGINALVIDEOBUCKETNAME;
 const key = process.env.KEY;
 const creadentails = key.split("/");
-const UploadId = creadentails[2];
+const UploadId = creadentails[2].replace(".mp4", "");
 const uploderID = creadentails[1];
-if (socket.connected) {
-  socket.emit("videotranscoding-init", {
-    videoId: UploadId,
-    uploaderId: uploderID,
-    progress: 0,
-  });
-}
+console.log("reached");
+socket.emit("videotranscoding-init", {
+  videoId: UploadId,
+  uploaderId: uploderID,
+  progress: 0,
+});
+
 const resolutions = [
   { name: "240p", height: 240, bitrate: 300 },
   { name: "360p", height: 360, bitrate: 800 },
@@ -126,14 +126,12 @@ async function processVideoHLS(originalPath) {
             progress = Math.floor((processedCount / totalCount) * 100);
             console.log(` HLS for ${res.name} done`);
             console.log(`Progress: ${progress}%`);
-
             socket.emit("transcoding-progress", {
               videoId: UploadId,
               uploaderId: uploderID,
               progress: progress,
-              file:res.name,
+              file: res.name,
             });
-
             resolve();
           })
           .on("error", (err) => {
@@ -146,7 +144,6 @@ async function processVideoHLS(originalPath) {
   });
 
   await Promise.all(hlsPromises);
-
 
   const masterPlaylist = `#EXTM3U\n${masterPlaylistLines.join("\n")}`;
   const masterPath = path.resolve("master.m3u8");
@@ -167,24 +164,22 @@ async function init() {
     await processVideoHLS(originalPath);
     console.log(" Adaptive HLS streaming setup complete");
 
-    if (socket.connected) {
-      socket.emit("videotranscoding-done", {
-        videoId: UploadId,
-        uploaderId: uploderID,
-        progress: 100,
-      });
-    }
+    socket.emit("videotranscoding-done", {
+      videoId: UploadId,
+      uploaderId: uploderID,
+      progress: 100,
+    });
+
     socket.disconnect();
   } catch (error) {
     console.error(" Error:", error);
-    
-    if (socket.connected) {
-      socket.emit("videotranscoding-fail", {
-        videoId: UploadId,
-        uploaderId: uploderID,
-        progress: 0,
-      });
-    }
+
+    socket.emit("videotranscoding-fail", {
+      videoId: UploadId,
+      uploaderId: uploderID,
+      progress: 0,
+    });
+
     socket.disconnect();
   }
 }

@@ -4,7 +4,8 @@ const { getClient } = require("../config/redisConnet");
 module.exports.registerTranscodingEvents=(io, socket)=>{
   const client = getClient();
   socket.on("videotranscoding-init", async ({ videoId, uploaderId, progress }) => {
-    await UploadModel.findByIdAndUpdate(videoId, { status: "processing" });
+    console.log(videoId)
+    await UploadModel.findByIdAndUpdate(uploaderId, { status: "processing" });
     const socketIds = await client.sMembers(`socket:${uploaderId}`);
     socketIds.forEach((id) => {
       io.to(id).emit(`transcoding-init-${videoId}`, { msg: "Transcoding started", progress });

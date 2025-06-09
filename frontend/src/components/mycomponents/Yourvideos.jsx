@@ -62,7 +62,7 @@ function YourVideos() {
   }
 
   return (
-    <div className="p-6 h-screen overflow-y-auto space-y-12">
+    <div className="p-13 h-screen  space-y-12">
       {/* Incomplete Videos */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold tracking-tight">Incomplete</h2>
